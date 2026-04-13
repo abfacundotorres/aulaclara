@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="Bizcochuela — Asistente pedagógica IA para docentes y padres de primaria en Córdoba">
+<meta name="description" content="Bizcochuela — Asistente pedagógica para docentes y familias de primaria en Córdoba">
 <meta name="theme-color" content="#D95F1A">
 <title>Bizcochuela — Asistente Pedagógica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,8 +74,7 @@
   }
 
   .avatar-ring {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     border-radius: 50%;
     background: var(--orange-pale);
     border: 2.5px solid var(--orange);
@@ -85,8 +84,7 @@
     flex-shrink: 0;
     overflow: hidden;
   }
-
-  .avatar-ring img { width: 40px; height: 40px; object-fit: contain; }
+  .avatar-ring img { width: 44px; height: 44px; object-fit: cover; }
 
   .header-text { flex: 1; min-width: 0; }
 
@@ -118,17 +116,10 @@
     white-space: nowrap;
     transition: background 0.3s, color 0.3s;
   }
-
   .status-badge.online  { color: var(--green); background: var(--green-pale); }
   .status-badge.offline { color: var(--red);   background: var(--red-pale); }
 
-  .status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    transition: background 0.3s;
-  }
-
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; transition: background 0.3s; }
   .status-badge.online  .status-dot { background: var(--green); animation: pulse 2.5s ease-in-out infinite; }
   .status-badge.offline .status-dot { background: var(--red); animation: none; }
 
@@ -149,7 +140,6 @@
     margin-bottom: 8px;
     flex-shrink: 0;
   }
-
   .offline-banner.visible { display: block; }
 
   .messages {
@@ -162,7 +152,6 @@
     scroll-behavior: smooth;
     overscroll-behavior: contain;
   }
-
   .messages::-webkit-scrollbar       { width: 4px; }
   .messages::-webkit-scrollbar-track { background: transparent; }
   .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -172,17 +161,14 @@
     gap: 9px;
     animation: slideUp 0.22s ease-out both;
   }
-
   @keyframes slideUp {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-
   .msg-row.user { flex-direction: row-reverse; }
 
   .msg-avatar {
-    width: 30px;
-    height: 30px;
+    width: 30px; height: 30px;
     border-radius: 50%;
     background: var(--orange-pale);
     border: 1.5px solid var(--border);
@@ -193,8 +179,7 @@
     overflow: hidden;
     align-self: flex-end;
   }
-
-  .msg-avatar img { width: 24px; height: 24px; object-fit: contain; }
+  .msg-avatar img { width: 26px; height: 26px; object-fit: cover; border-radius: 50%; }
 
   .bubble {
     max-width: 76%;
@@ -204,20 +189,17 @@
     line-height: 1.65;
     word-break: break-word;
   }
-
   .msg-row.bot .bubble {
     background: var(--warm-white);
     border: 1px solid var(--border);
     color: var(--brown-dark);
     border-bottom-left-radius: 5px;
   }
-
   .msg-row.user .bubble {
     background: var(--orange);
     color: #FFF8F0;
     border-bottom-right-radius: 5px;
   }
-
   .bubble strong { font-weight: 500; }
   .bubble em     { font-style: italic; opacity: 0.85; }
   .bubble ul, .bubble ol { padding-left: 18px; margin: 6px 0; }
@@ -225,156 +207,97 @@
 
   .typing-row         { display: none; }
   .typing-row.visible { display: flex; }
-
   .typing-dots {
-    display: flex;
-    gap: 5px;
-    align-items: center;
+    display: flex; gap: 5px; align-items: center;
     padding: 11px 15px;
     background: var(--warm-white);
     border: 1px solid var(--border);
     border-radius: 18px;
     border-bottom-left-radius: 5px;
   }
-
   .typing-dots span {
-    width: 7px;
-    height: 7px;
+    width: 7px; height: 7px;
     background: var(--orange-light);
     border-radius: 50%;
     animation: bounce 1.3s ease-in-out infinite;
     opacity: 0.4;
   }
-
   .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
   .typing-dots span:nth-child(3) { animation-delay: 0.30s; }
-
   @keyframes bounce {
     0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
     30%           { transform: translateY(-7px); opacity: 1; }
   }
 
   .input-area { padding: 10px 0 14px; flex-shrink: 0; }
-
   .input-wrap {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
+    display: flex; gap: 8px; align-items: flex-end;
     background: var(--warm-white);
     border: 1.5px solid var(--border);
     border-radius: 24px;
     padding: 8px 8px 8px 16px;
     transition: border-color 0.2s;
   }
-
   .input-wrap:focus-within { border-color: var(--orange); }
 
   #userInput {
-    flex: 1;
-    border: none;
-    outline: none;
+    flex: 1; border: none; outline: none;
     background: transparent;
     font-family: 'DM Sans', sans-serif;
     font-size: 14px;
     color: var(--brown-dark);
     resize: none;
-    min-height: 22px;
-    max-height: 110px;
-    line-height: 1.5;
-    padding: 2px 0;
+    min-height: 22px; max-height: 110px;
+    line-height: 1.5; padding: 2px 0;
   }
-
   #userInput::placeholder { color: var(--brown-light); opacity: 0.55; }
 
-  .input-footer {
-    display: flex;
-    justify-content: flex-end;
-    padding: 3px 6px 0;
-  }
-
-  .char-count {
-    font-size: 10px;
-    color: var(--brown-light);
-    opacity: 0.5;
-    transition: color 0.2s, opacity 0.2s;
-  }
-
+  .input-footer { display: flex; justify-content: flex-end; padding: 3px 6px 0; }
+  .char-count { font-size: 10px; color: var(--brown-light); opacity: 0.5; transition: color 0.2s, opacity 0.2s; }
   .char-count.warn  { color: #B45309; opacity: 0.9; }
   .char-count.limit { color: var(--red); opacity: 1; }
 
   .send-btn {
-    width: 38px;
-    height: 38px;
+    width: 38px; height: 38px;
     border-radius: 50%;
     background: var(--orange);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: background 0.15s, transform 0.1s;
   }
-
   .send-btn:hover:not(:disabled)  { background: var(--orange-hover); }
   .send-btn:active:not(:disabled) { transform: scale(0.92); }
   .send-btn:disabled { background: var(--border); cursor: not-allowed; }
   .send-btn svg { fill: #FFF8F0; width: 15px; height: 15px; }
 
   .disclaimer {
-    text-align: center;
-    font-size: 10px;
-    color: var(--brown-light);
-    opacity: 0.5;
-    padding: 5px 0 3px;
-    line-height: 1.4;
+    text-align: center; font-size: 10px;
+    color: var(--brown-light); opacity: 0.5;
+    padding: 5px 0 3px; line-height: 1.4;
   }
 
-  .suggestions {
-    display: flex;
-    gap: 7px;
-    flex-wrap: wrap;
-    padding-bottom: 2px;
-  }
-
+  .suggestions { display: flex; gap: 7px; flex-wrap: wrap; padding-bottom: 2px; }
   .chip {
-    font-size: 12px;
-    padding: 5px 11px;
-    background: var(--amber-pale);
-    color: var(--brown-mid);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background 0.15s;
-    font-family: 'DM Sans', sans-serif;
-    line-height: 1.4;
+    font-size: 12px; padding: 5px 11px;
+    background: var(--amber-pale); color: var(--brown-mid);
+    border: 1px solid var(--border); border-radius: 20px;
+    cursor: pointer; transition: background 0.15s;
+    font-family: 'DM Sans', sans-serif; line-height: 1.4;
   }
-
   .chip:hover { background: var(--orange-pale); }
 
   .toast {
-    position: fixed;
-    bottom: 88px;
-    left: 50%;
+    position: fixed; bottom: 88px; left: 50%;
     transform: translateX(-50%) translateY(8px);
-    background: var(--brown-dark);
-    color: #FFF8F0;
-    padding: 8px 18px;
-    border-radius: 20px;
-    font-size: 13px;
-    opacity: 0;
+    background: var(--brown-dark); color: #FFF8F0;
+    padding: 8px 18px; border-radius: 20px;
+    font-size: 13px; opacity: 0;
     transition: opacity 0.25s, transform 0.25s;
-    pointer-events: none;
-    z-index: 100;
-    white-space: nowrap;
-    max-width: 90vw;
-    text-align: center;
+    pointer-events: none; z-index: 100;
+    white-space: nowrap; max-width: 90vw; text-align: center;
   }
-
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   @media (max-width: 480px) {
     .page        { padding: 8px 8px 0; }
@@ -394,13 +317,13 @@
 
   <header class="header" role="banner">
     <div class="avatar-ring">
-      <img src="https://i.imgur.com/VmpkFVX.png" alt="Bizcochuela, asistente pedagógica">
+      <img src="https://i.imgur.com/TWNG5QL.png" alt="Bizcochuela">
     </div>
     <div class="header-text">
       <div class="header-name">Bizcochuela</div>
-      <div class="header-sub">Asistente pedagógica · Primaria Córdoba</div>
+      <div class="header-sub">Asistente pedagógica de docentes y familias · Primaria Córdoba</div>
     </div>
-    <div class="status-badge online" id="statusBadge" aria-label="Estado de conexión">
+    <div class="status-badge online" id="statusBadge">
       <div class="status-dot"></div>
       <span id="statusText">En línea</span>
     </div>
@@ -410,26 +333,25 @@
     Sin conexión a internet. Revisá tu red para continuar.
   </div>
 
-  <main class="messages" id="messages" role="log" aria-label="Conversación" aria-live="polite">
+  <main class="messages" id="messages" role="log" aria-live="polite">
     <div class="msg-row bot">
       <div class="msg-avatar">
-        <img src="https://i.imgur.com/VmpkFVX.png" alt="">
+        <img src="https://i.imgur.com/TWNG5QL.png" alt="">
       </div>
       <div class="bubble">
-        ¡Hola! Soy <strong>Bizcochuela</strong>, tu asistente pedagógica 🐾<br><br>
-        Puedo ayudarte a diseñar actividades, explicar contenidos curriculares, armar juegos o acompañar el aprendizaje de tus alumnos de primaria. ¿Por dónde empezamos?
+        ¡Hola! Soy <strong>Bizcochuela</strong> 🐾 ¿Sos docente o acompañás a tu hijo/a en casa?
       </div>
     </div>
 
-    <div class="suggestions" id="suggestions" aria-label="Consultas frecuentes">
-      <button class="chip" onclick="sendSuggestion('Necesito una actividad de Lengua para 2do grado')">Actividad de Lengua</button>
-      <button class="chip" onclick="sendSuggestion('¿Cómo explico las fracciones a chicos de 3er grado?')">Explicar fracciones</button>
-      <button class="chip" onclick="sendSuggestion('Armame un juego para trabajar las provincias argentinas')">Juego de geografía</button>
+    <div class="suggestions" id="suggestions">
+      <button class="chip" onclick="sendSuggestion('Soy docente, necesito ayuda con una actividad')">Soy docente</button>
+      <button class="chip" onclick="sendSuggestion('Soy papá/mamá y quiero ayudar con la tarea')">Soy padre/madre</button>
+      <button class="chip" onclick="sendSuggestion('Necesito ideas para trabajar fracciones')">Ideas para fracciones</button>
     </div>
 
-    <div class="typing-row" id="typingRow" aria-label="Bizcochuela está escribiendo">
+    <div class="typing-row" id="typingRow">
       <div class="msg-avatar">
-        <img src="https://i.imgur.com/VmpkFVX.png" alt="">
+        <img src="https://i.imgur.com/TWNG5QL.png" alt="">
       </div>
       <div class="typing-dots" aria-hidden="true">
         <span></span><span></span><span></span>
@@ -448,7 +370,7 @@
         autocomplete="off"
         spellcheck="true"
       ></textarea>
-      <button class="send-btn" id="sendBtn" aria-label="Enviar mensaje" disabled>
+      <button class="send-btn" id="sendBtn" aria-label="Enviar" disabled>
         <svg viewBox="0 0 16 16" aria-hidden="true">
           <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
         </svg>
@@ -466,13 +388,11 @@
 
 <script>
   const WORKER_URL = 'https://bizcochuela.abfacundotorres.workers.dev';
-
   const MAX_CHARS  = 1500;
   const MAX_RETRY  = 2;
   const RETRY_BASE = 1200;
 
   const $ = id => document.getElementById(id);
-
   const messagesEl    = $('messages');
   const typingRow     = $('typingRow');
   const inputEl       = $('userInput');
@@ -490,11 +410,8 @@
 
   function escapeHTML(str) {
     return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
   function formatText(raw) {
@@ -536,18 +453,15 @@
   function appendMessage(text, role) {
     const row    = document.createElement('div');
     row.classList.add('msg-row', role);
-
     const av     = document.createElement('div');
     av.className = 'msg-avatar';
     av.setAttribute('aria-hidden', 'true');
     av.innerHTML = role === 'bot'
-      ? '<img src="https://i.imgur.com/VmpkFVX.png" alt="">'
+      ? '<img src="https://i.imgur.com/TWNG5QL.png" alt="">'
       : '<svg style="width:15px;height:15px;fill:#C47A3A" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/></svg>';
-
     const bubble    = document.createElement('div');
     bubble.className = 'bubble';
     bubble.innerHTML = formatText(text);
-
     row.appendChild(av);
     row.appendChild(bubble);
     messagesEl.insertBefore(row, typingRow);
@@ -566,95 +480,69 @@
   async function fetchWithRetry(message, attempt = 0) {
     const controller = new AbortController();
     const timeout    = setTimeout(() => controller.abort(), 26000);
-
     try {
       const res = await fetch(WORKER_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message,
-          history: history.slice(-16),
-        }),
+        body: JSON.stringify({ message, history: history.slice(-16) }),
         signal: controller.signal,
       });
-
       clearTimeout(timeout);
-
       if (res.status === 429) throw Object.assign(new Error('rate_limit'), { fatal: true });
       if (!res.ok) throw new Error(`http_${res.status}`);
-
       const data = await res.json();
       if (data.error) throw Object.assign(new Error(data.error), { fatal: true });
       if (!data.reply) throw new Error('empty_response');
-
       return data.reply;
-
     } catch (err) {
       clearTimeout(timeout);
       if (err.fatal) throw err;
       if (!navigator.onLine) throw Object.assign(new Error('offline'), { fatal: true });
-
       if (attempt < MAX_RETRY) {
         const wait = RETRY_BASE * Math.pow(2, attempt);
         showToast(`Reintentando… (${attempt + 1}/${MAX_RETRY})`);
         await new Promise(r => setTimeout(r, wait));
         return fetchWithRetry(message, attempt + 1);
       }
-
       throw err;
     }
   }
 
   async function sendMessage(text) {
     if (!text.trim() || isLoading) return;
-
-    isLoading        = true;
+    isLoading = true;
     sendBtn.disabled = true;
-
     if (suggestEl) suggestEl.style.display = 'none';
-
     appendMessage(text, 'user');
     showTyping();
-
-    const pendingUserTurn = { role: 'user', parts: [{ text }] };
-
+    const pendingTurn = { role: 'user', parts: [{ text }] };
     try {
       const reply = await fetchWithRetry(text);
       hideTyping();
       appendMessage(reply, 'bot');
-
-      history.push(pendingUserTurn);
+      history.push(pendingTurn);
       history.push({ role: 'model', parts: [{ text: reply }] });
       if (history.length > 32) history = history.slice(-32);
-
     } catch (err) {
       hideTyping();
-      let userMsg;
-      if (err.message === 'rate_limit') {
-        userMsg = 'Estás enviando muchas consultas seguidas. Esperá un minuto e intentá de nuevo 🐾';
-      } else if (err.message === 'offline') {
-        userMsg = 'Sin conexión a internet. Revisá tu red e intentá de nuevo 🐾';
-      } else if (err.name === 'AbortError') {
-        userMsg = 'La consulta tardó demasiado. Revisá tu conexión e intentá de nuevo 🐾';
-      } else {
-        userMsg = err.message.length < 120
-          ? err.message
-          : 'Tuve un problema técnico. Intentá de nuevo en un momento 🐾';
-      }
-      appendMessage(userMsg, 'bot');
+      const msgs = {
+        rate_limit: 'Muchas consultas seguidas. Esperá un minuto 🐾',
+        offline:    'Sin conexión. Revisá tu red 🐾',
+      };
+      appendMessage(
+        msgs[err.message] ||
+        (err.name === 'AbortError' ? 'Tardó demasiado. Intentá de nuevo 🐾' :
+        err.message.length < 120 ? err.message : 'Problema técnico. Intentá de nuevo 🐾'),
+        'bot'
+      );
     } finally {
-      isLoading        = false;
+      isLoading = false;
       sendBtn.disabled = inputEl.value.trim().length === 0;
       inputEl.focus();
     }
   }
 
-  function sendSuggestion(text) {
-    inputEl.value = text;
-    autoResize();
-    updateCharCount();
-    handleSend();
-  }
+  function sendSuggestion(text) { inputEl.value = text; autoResize(); updateCharCount(); handleSend(); }
 
   function handleSend() {
     const text = inputEl.value.trim();
@@ -666,16 +554,10 @@
   }
 
   sendBtn.addEventListener('click', handleSend);
-
-  inputEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-  });
-
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
   inputEl.addEventListener('input', () => { autoResize(); updateCharCount(); });
-
   window.addEventListener('online',  () => setStatus(true));
   window.addEventListener('offline', () => setStatus(false));
-
   inputEl.addEventListener('focus', () => {
     document.querySelector('meta[name=viewport]')
       .setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
