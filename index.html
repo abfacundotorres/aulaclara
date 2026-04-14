@@ -5,10 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="description" content="Bizcochuela — Asistente pedagógica para docentes y familias de primaria en Córdoba">
 <meta name="theme-color" content="#D95F1A">
+<!-- Fix B: CSP en el HTML donde corresponde -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src https://i.imgur.com data:; connect-src https://bizcochuela.abfacundotorres.workers.dev;">
 <title>Bizcochuela — Asistente Pedagógica</title>
+<!-- Fix #13: fonts no bloqueantes -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"></noscript>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -33,7 +37,7 @@
   html, body {
     height: 100%;
     background: var(--cream);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
     color: var(--brown-dark);
     overflow: hidden;
     -webkit-font-smoothing: antialiased;
@@ -83,13 +87,14 @@
     justify-content: center;
     flex-shrink: 0;
     overflow: hidden;
+    font-size: 22px;
   }
   .avatar-ring img { width: 44px; height: 44px; object-fit: cover; }
 
   .header-text { flex: 1; min-width: 0; }
 
   .header-name {
-    font-family: 'Fraunces', serif;
+    font-family: 'Fraunces', Georgia, serif;
     font-size: 1.15rem;
     font-weight: 600;
     color: var(--brown-dark);
@@ -178,6 +183,7 @@
     flex-shrink: 0;
     overflow: hidden;
     align-self: flex-end;
+    font-size: 14px;
   }
   .msg-avatar img { width: 26px; height: 26px; object-fit: cover; border-radius: 50%; }
 
@@ -202,8 +208,14 @@
   }
   .bubble strong { font-weight: 500; }
   .bubble em     { font-style: italic; opacity: 0.85; }
-  .bubble ul, .bubble ol { padding-left: 18px; margin: 6px 0; }
-  .bubble li     { margin-bottom: 3px; }
+
+  /* Fix D: párrafos en lugar de span+br */
+  .bubble p      { margin: 0 0 6px; }
+  .bubble p:last-child { margin-bottom: 0; }
+  .bubble ul, .bubble ol { padding-left: 20px; margin: 6px 0; }
+  .bubble li     { margin-bottom: 4px; }
+  .bubble ul li  { list-style-type: disc; }
+  .bubble ol li  { list-style-type: decimal; }
 
   .typing-row         { display: none; }
   .typing-row.visible { display: flex; }
@@ -243,7 +255,7 @@
   #userInput {
     flex: 1; border: none; outline: none;
     background: transparent;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
     font-size: 14px;
     color: var(--brown-dark);
     resize: none;
@@ -277,15 +289,28 @@
     padding: 5px 0 3px; line-height: 1.4;
   }
 
-  .suggestions { display: flex; gap: 7px; flex-wrap: wrap; padding-bottom: 2px; }
+  /* Fix mobile: chips siempre visibles */
+  .suggestions {
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    padding-bottom: 2px;
+  }
+
   .chip {
     font-size: 12px; padding: 5px 11px;
     background: var(--amber-pale); color: var(--brown-mid);
     border: 1px solid var(--border); border-radius: 20px;
-    cursor: pointer; transition: background 0.15s;
-    font-family: 'DM Sans', sans-serif; line-height: 1.4;
+    cursor: pointer; transition: background 0.15s, opacity 0.15s;
+    font-family: 'DM Sans', system-ui, sans-serif; line-height: 1.4;
   }
-  .chip:hover { background: var(--orange-pale); }
+  .chip:hover  { background: var(--orange-pale); }
+  /* Fix K: chips deshabilitados durante loading */
+  .chip:disabled, .chip[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 
   .toast {
     position: fixed; bottom: 88px; left: 50%;
@@ -304,7 +329,9 @@
     .header      { padding: 10px 13px; border-radius: 16px; }
     .header-name { font-size: 1.05rem; }
     .bubble      { max-width: 88%; font-size: 13px; }
-    .suggestions { display: none; }
+    /* Fix mobile chips: antes estaban ocultos en mobile — ahora siempre visibles */
+    .suggestions { gap: 6px; }
+    .chip        { font-size: 11px; padding: 5px 10px; }
     .toast       { bottom: 80px; font-size: 12px; }
   }
 </style>
@@ -316,8 +343,12 @@
 <div class="page">
 
   <header class="header" role="banner">
-    <div class="avatar-ring">
-      <img src="https://i.imgur.com/TWNG5QL.png" alt="Bizcochuela">
+    <div class="avatar-ring" id="avatarRing">
+      <img
+        src="https://i.imgur.com/TWNG5QL.png"
+        alt="Bizcochuela"
+        onerror="this.style.display='none'; document.getElementById('avatarRing').textContent='🐾';"
+      >
     </div>
     <div class="header-text">
       <div class="header-name">Bizcochuela</div>
@@ -336,13 +367,19 @@
   <main class="messages" id="messages" role="log" aria-live="polite">
     <div class="msg-row bot">
       <div class="msg-avatar">
-        <img src="https://i.imgur.com/TWNG5QL.png" alt="">
+        <img
+          src="https://i.imgur.com/TWNG5QL.png"
+          alt=""
+          onerror="this.style.display='none'; this.parentNode.textContent='🐾';"
+        >
       </div>
       <div class="bubble">
-        ¡Hola! Soy <strong>Bizcochuela</strong> 🐾 ¿Sos docente o acompañás a tu hijo/a en casa?
+        <p>¡Hola! Soy <strong>Bizcochuela</strong> 🐾</p>
+        <p>¿Sos docente o acompañás a tu hijo/a en casa?</p>
       </div>
     </div>
 
+    <!-- Fix mobile: chips siempre visibles, nunca display:none en mobile -->
     <div class="suggestions" id="suggestions">
       <button class="chip" onclick="sendSuggestion('Soy docente, necesito ayuda con una actividad')">Soy docente</button>
       <button class="chip" onclick="sendSuggestion('Soy papá/mamá y quiero ayudar con la tarea')">Soy padre/madre</button>
@@ -351,7 +388,11 @@
 
     <div class="typing-row" id="typingRow">
       <div class="msg-avatar">
-        <img src="https://i.imgur.com/TWNG5QL.png" alt="">
+        <img
+          src="https://i.imgur.com/TWNG5QL.png"
+          alt=""
+          onerror="this.style.display='none'; this.parentNode.textContent='🐾';"
+        >
       </div>
       <div class="typing-dots" aria-hidden="true">
         <span></span><span></span><span></span>
@@ -387,10 +428,12 @@
 </div>
 
 <script>
-  const WORKER_URL = 'https://bizcochuela.abfacundotorres.workers.dev';
-  const MAX_CHARS  = 1500;
-  const MAX_RETRY  = 2;
-  const RETRY_BASE = 1200;
+  const WORKER_URL     = 'https://bizcochuela.abfacundotorres.workers.dev';
+  const MAX_CHARS      = 1500;
+  const MAX_RETRY      = 2;
+  const RETRY_BASE     = 1200;
+  const CLIENT_TIMEOUT = 26000;
+  const HISTORY_LIMIT  = 16; // Fix C: sincronizado con Worker
 
   const $ = id => document.getElementById(id);
   const messagesEl    = $('messages');
@@ -414,11 +457,58 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
+  // Fix J: regex mejorado — asterisco sin par no rompe el output
+  function applyInline(text) {
+    // Primero negrita (doble asterisco), luego cursiva (simple)
+    // Fix J: solo matchea si hay un par completo en la misma línea
+    return text
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g,     '<em>$1</em>')
+      .replace(/_([^_]+)_/g,       '<em>$1</em>');
+  }
+
+  // Fix D: usa <p> en lugar de <span><br> — elimina espaciado doble
   function formatText(raw) {
-    return escapeHTML(raw)
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g,     '<em>$1</em>')
-      .replace(/\n/g,            '<br>');
+    const lines  = raw.split('\n');
+    const result = [];
+    let inUl = false, inOl = false;
+    let paraBuffer = [];
+
+    function flushPara() {
+      if (paraBuffer.length === 0) return;
+      result.push(`<p>${paraBuffer.join('<br>')}</p>`);
+      paraBuffer = [];
+    }
+
+    for (const line of lines) {
+      const escaped  = escapeHTML(line);
+      const ulMatch  = escaped.match(/^[-*]\s+(.+)/);
+      const olMatch  = escaped.match(/^\d+\.\s+(.+)/);
+
+      if (ulMatch) {
+        flushPara();
+        if (!inUl) { if (inOl) { result.push('</ol>'); inOl = false; } result.push('<ul>'); inUl = true; }
+        result.push(`<li>${applyInline(ulMatch[1])}</li>`);
+      } else if (olMatch) {
+        flushPara();
+        if (!inOl) { if (inUl) { result.push('</ul>'); inUl = false; } result.push('<ol>'); inOl = true; }
+        result.push(`<li>${applyInline(olMatch[1])}</li>`);
+      } else {
+        if (inUl) { result.push('</ul>'); inUl = false; }
+        if (inOl) { result.push('</ol>'); inOl = false; }
+        if (escaped === '') {
+          flushPara();
+        } else {
+          paraBuffer.push(applyInline(escaped));
+        }
+      }
+    }
+
+    flushPara();
+    if (inUl) result.push('</ul>');
+    if (inOl) result.push('</ol>');
+
+    return result.join('');
   }
 
   function scrollBottom() {
@@ -450,18 +540,36 @@
     sendBtn.disabled = len === 0 || isLoading;
   }
 
+  // Fix K: deshabilitar/habilitar chips durante loading
+  function setChipsDisabled(disabled) {
+    if (!suggestEl) return;
+    suggestEl.querySelectorAll('.chip').forEach(c => {
+      c.disabled = disabled;
+    });
+  }
+
   function appendMessage(text, role) {
     const row    = document.createElement('div');
     row.classList.add('msg-row', role);
+
     const av     = document.createElement('div');
     av.className = 'msg-avatar';
     av.setAttribute('aria-hidden', 'true');
-    av.innerHTML = role === 'bot'
-      ? '<img src="https://i.imgur.com/TWNG5QL.png" alt="">'
-      : '<svg style="width:15px;height:15px;fill:#C47A3A" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/></svg>';
+
+    if (role === 'bot') {
+      const img = document.createElement('img');
+      img.src = 'https://i.imgur.com/TWNG5QL.png';
+      img.alt = '';
+      img.onerror = () => { img.style.display = 'none'; av.textContent = '🐾'; };
+      av.appendChild(img);
+    } else {
+      av.innerHTML = '<svg style="width:15px;height:15px;fill:#C47A3A" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/></svg>';
+    }
+
     const bubble    = document.createElement('div');
     bubble.className = 'bubble';
     bubble.innerHTML = formatText(text);
+
     row.appendChild(av);
     row.appendChild(bubble);
     messagesEl.insertBefore(row, typingRow);
@@ -477,33 +585,58 @@
     offlineBanner.classList.toggle('visible', !online);
   }
 
+  function isRetryable(err) {
+    if (err.name === 'AbortError') return true;
+    if (err.message?.startsWith('http_5')) return true;
+    return false;
+  }
+
+  // Fix H: truncar historial en cliente antes de enviar
+  function buildHistoryPayload() {
+    return history.slice(-HISTORY_LIMIT).map(t => ({
+      role:  t.role,
+      parts: [{ text: t.parts[0].text.slice(0, 150) }],
+    }));
+  }
+
   async function fetchWithRetry(message, attempt = 0) {
     const controller = new AbortController();
-    const timeout    = setTimeout(() => controller.abort(), 26000);
+    const timeout    = setTimeout(() => controller.abort(), CLIENT_TIMEOUT);
+
     try {
       const res = await fetch(WORKER_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history: history.slice(-16) }),
+        body: JSON.stringify({ message, history: buildHistoryPayload() }),
         signal: controller.signal,
       });
+
       clearTimeout(timeout);
+
       if (res.status === 429) throw Object.assign(new Error('rate_limit'), { fatal: true });
+      if (res.status >= 400 && res.status < 500) {
+        throw Object.assign(new Error(`http_${res.status}`), { fatal: true });
+      }
       if (!res.ok) throw new Error(`http_${res.status}`);
+
       const data = await res.json();
       if (data.error) throw Object.assign(new Error(data.error), { fatal: true });
       if (!data.reply) throw new Error('empty_response');
+
       return data.reply;
+
     } catch (err) {
       clearTimeout(timeout);
       if (err.fatal) throw err;
       if (!navigator.onLine) throw Object.assign(new Error('offline'), { fatal: true });
-      if (attempt < MAX_RETRY) {
+
+      if (attempt < MAX_RETRY && isRetryable(err)) {
         const wait = RETRY_BASE * Math.pow(2, attempt);
         showToast(`Reintentando… (${attempt + 1}/${MAX_RETRY})`);
         await new Promise(r => setTimeout(r, wait));
         return fetchWithRetry(message, attempt + 1);
       }
+
       throw err;
     }
   }
@@ -512,17 +645,22 @@
     if (!text.trim() || isLoading) return;
     isLoading = true;
     sendBtn.disabled = true;
-    if (suggestEl) suggestEl.style.display = 'none';
+    setChipsDisabled(true); // Fix K
+
     appendMessage(text, 'user');
     showTyping();
+
     const pendingTurn = { role: 'user', parts: [{ text }] };
+
     try {
       const reply = await fetchWithRetry(text);
       hideTyping();
       appendMessage(reply, 'bot');
+
       history.push(pendingTurn);
       history.push({ role: 'model', parts: [{ text: reply }] });
-      if (history.length > 32) history = history.slice(-32);
+      if (history.length > HISTORY_LIMIT * 2) history = history.slice(-HISTORY_LIMIT * 2);
+
     } catch (err) {
       hideTyping();
       const msgs = {
@@ -531,18 +669,28 @@
       };
       appendMessage(
         msgs[err.message] ||
-        (err.name === 'AbortError' ? 'Tardó demasiado. Intentá de nuevo 🐾' :
-        err.message.length < 120 ? err.message : 'Problema técnico. Intentá de nuevo 🐾'),
+        (err.name === 'AbortError'
+          ? 'Tardó demasiado. Intentá de nuevo 🐾'
+          : err.message.length < 120
+            ? err.message
+            : 'Problema técnico. Intentá de nuevo en un momento 🐾'),
         'bot'
       );
     } finally {
       isLoading = false;
       sendBtn.disabled = inputEl.value.trim().length === 0;
+      setChipsDisabled(false); // Fix K
       inputEl.focus();
     }
   }
 
-  function sendSuggestion(text) { inputEl.value = text; autoResize(); updateCharCount(); handleSend(); }
+  function sendSuggestion(text) {
+    if (isLoading) return; // Fix K: guard adicional
+    inputEl.value = text;
+    autoResize();
+    updateCharCount();
+    handleSend();
+  }
 
   function handleSend() {
     const text = inputEl.value.trim();
@@ -554,7 +702,9 @@
   }
 
   sendBtn.addEventListener('click', handleSend);
-  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  });
   inputEl.addEventListener('input', () => { autoResize(); updateCharCount(); });
   window.addEventListener('online',  () => setStatus(true));
   window.addEventListener('offline', () => setStatus(false));
