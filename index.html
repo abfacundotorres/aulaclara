@@ -247,61 +247,72 @@ let toastTimer;
 // Acumula los 3 períodos hasta tener el plan completo
 const planAnual = {
   active:   false,
+  periodo0: null, // intro: datos + fundamentación + propósitos
   periodo1: null,
   periodo2: null,
   periodo3: null,
   reset() {
     this.active   = false;
+    this.periodo0 = null;
     this.periodo1 = null;
     this.periodo2 = null;
     this.periodo3 = null;
     planProgress.classList.remove('visible');
   },
   getPeriodosCompletos() {
+    // Contamos períodos 1-3 (no el 0 que es intro)
     return [this.periodo1, this.periodo2, this.periodo3].filter(Boolean).length;
   },
   getFullContent() {
-    // Une los 3 períodos en un solo bloque para el Word
-    // Extrae el TITULO del período 1 y construye un único documento
+    const p0 = this.periodo0 || '';
     const p1 = this.periodo1 || '';
     const p2 = this.periodo2 || '';
     const p3 = this.periodo3 || '';
 
-    // Extraer título del período 1
-    const titleMatch = p1.match(/\[TITULO\]\s*(.+)/);
-    const titulo = titleMatch ? titleMatch[1].replace(' (continuación)','').replace(' (cierre)','').trim() : 'Plan Anual';
+    // Extraer título del período 0
+    const titleMatch = p0.match(/\[TITULO\]\s*(.+)/);
+    const titulo = titleMatch ? titleMatch[1].trim() : 'Plan Anual';
 
-    // Extraer contenido de cada período (sin el TITULO ni PERIODO_X)
+    // Extraer cuerpo de cada parte (sin marcas de periodo/titulo/fin)
     const extractBody = (text) => text
       .replace(/\[PERIODO_\d\]\s*/g, '')
       .replace(/\[TITULO\][^\n]*\n?/g, '')
       .replace(/\[FIN_DOCUMENTO\]/g, '')
       .trim();
 
+    const body0 = extractBody(p0);
     const body1 = extractBody(p1);
     const body2 = extractBody(p2);
     const body3 = extractBody(p3);
 
-    return `[TITULO] ${titulo}\n${body1}\n${body2}\n${body3}\n[FIN_DOCUMENTO]`;
+    return `[TITULO] ${titulo}\n${body0}\n${body1}\n${body2}\n${body3}\n[FIN_DOCUMENTO]`;
   }
 };
 
-function updatePlanProgress(periodos) {
+function updatePlanProgress(parte) {
+  // parte: 0=intro, 1=p1, 2=p2, 3=p3
   planProgress.classList.add('visible');
+  const labels = ['Introducción lista','Período 1 listo','Período 2 listo','Plan Anual completo ✅'];
   const steps = ['planStep1','planStep2','planStep3'];
+  // Mapear parte (0-3) a progreso visual (0-3)
   steps.forEach((id, i) => {
     const el = $(id);
-    if (i < periodos - 1)     { el.className = 'plan-step done'; }
-    else if (i === periodos - 1) { el.className = 'plan-step current'; }
-    else                       { el.className = 'plan-step'; }
+    if (i < parte)      { el.className = 'plan-step done'; }
+    else if (i === parte - 1 || (parte === 0 && i === 0)) { el.className = 'plan-step current'; }
+    else                 { el.className = 'plan-step'; }
   });
-  if (periodos >= 3) {
-    planProgressLabel.textContent = 'Plan Anual completo — listo para descargar ✅';
+  if (parte === 0) {
+    $('planStep1').className = 'plan-step current';
+    $('planStep2').className = 'plan-step';
+    $('planStep3').className = 'plan-step';
+    planProgressLabel.textContent = 'Plan Anual — Introducción generada';
+  } else if (parte >= 3) {
     $('planStep1').className = 'plan-step done';
     $('planStep2').className = 'plan-step done';
     $('planStep3').className = 'plan-step done';
+    planProgressLabel.textContent = '¡Plan Anual completo — listo para descargar! ✅';
   } else {
-    planProgressLabel.textContent = `Plan Anual — Período ${periodos} de 3 generado`;
+    planProgressLabel.textContent = `Plan Anual — Período ${parte} de 3 generado`;
   }
 }
 
@@ -628,7 +639,9 @@ function appendMessage(text, role) {
   const hasDocument = text.includes('[FIN_DOCUMENTO]');
 
   // Detectar y acumular períodos del Plan Anual
-  if (isPeriodo1) { planAnual.active = true; planAnual.periodo1 = text; updatePlanProgress(1); }
+  const isPeriodo0 = text.includes('[PERIODO_0]');
+  if (isPeriodo0) { planAnual.active = true; planAnual.periodo0 = text; updatePlanProgress(0); }
+  if (isPeriodo1) { planAnual.periodo1 = text; updatePlanProgress(1); }
   if (isPeriodo2) { planAnual.periodo2 = text; updatePlanProgress(2); }
   if (isPeriodo3) { planAnual.periodo3 = text; updatePlanProgress(3); }
 
@@ -672,7 +685,11 @@ function appendMessage(text, role) {
     };
     actions.appendChild(copyBtn);
 
-    // Para períodos del Plan Anual: botón de descarga del período
+    // Para períodos del Plan Anual
+    const isPeriodo0 = text.includes('[PERIODO_0]');
+
+    // Período 0 (intro): sin botón de descarga individual, es solo el marco
+    // Períodos 1 y 2: botón para descargar ese período
     if ((isPeriodo1 || isPeriodo2) && hasDocument) {
       const periodoNum = isPeriodo1 ? 1 : 2;
       const periodoBtn = makeDownloadBtn(text);
@@ -680,22 +697,22 @@ function appendMessage(text, role) {
       actions.appendChild(periodoBtn);
     }
 
-    // Para período 3: botón de descarga del período Y botón del plan completo
+    // Período 3: botón del período + botón del plan completo (si hay periodo0)
     if (isPeriodo3 && hasDocument) {
       const p3btn = makeDownloadBtn(text);
       p3btn.innerHTML = '⬇️ Período 3';
       actions.appendChild(p3btn);
     }
 
-    // Botón Plan Anual completo: aparece cuando los 3 períodos están listos
-    if (isPeriodo3 && planAnual.periodo1 && planAnual.periodo2 && planAnual.periodo3) {
+    // Botón Plan Anual completo: cuando los 4 partes están listas
+    if (isPeriodo3 && planAnual.periodo0 && planAnual.periodo1 && planAnual.periodo2 && planAnual.periodo3) {
       const fullContent = planAnual.getFullContent();
       const fullBtn = makeDownloadBtn(fullContent, true);
       actions.appendChild(fullBtn);
     }
 
     // Para otros documentos (no Plan Anual)
-    if (hasDocument && !isPeriodo1 && !isPeriodo2 && !isPeriodo3) {
+    if (hasDocument && !isPeriodo0 && !isPeriodo1 && !isPeriodo2 && !isPeriodo3) {
       actions.appendChild(makeDownloadBtn(text));
     }
 
