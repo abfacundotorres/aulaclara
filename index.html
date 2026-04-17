@@ -455,9 +455,18 @@ function formatText(raw) {
 // ── Generación Word ─────────────────────────────────────────────
 
 function parseDocumentContent(raw) {
-  const lines = raw.split('\n');
+  // Normalizar: unir líneas donde la marca está sola y el contenido viene en la siguiente
+  // Ej: "[LISTA]\nContenido" → "[LISTA] Contenido"
+  const normalized = raw
+    .replace(/\[PERIODO_\d\]\s*/g, '')  // quitar marcas de período
+    .replace(/(\[(LISTA|TEXTO|CAMPO|SECCION|SUBSECCION|TITULO)\])\s*
+\s*(?!\[)/gm, '$1 ')
+    .replace(/^\s*[-•]\s*/gm, '[LISTA] ');  // convertir guiones/bullets en [LISTA]
+
+  const lines = normalized.split('\n');
   const documents = [];
   let currentDoc = null, currentSection = null, currentSubsection = null;
+  let lastTag = null; // para capturar contenido huérfano
 
   for (const line of lines) {
     const t = line.trim();
@@ -465,31 +474,48 @@ function parseDocumentContent(raw) {
 
     if (t === '[FIN_DOCUMENTO]') {
       if (currentDoc) documents.push(currentDoc);
-      currentDoc = null; currentSection = null; currentSubsection = null;
+      currentDoc = null; currentSection = null; currentSubsection = null; lastTag = null;
     } else if (t === '[SEPARADOR]') {
       if (currentDoc) documents.push(currentDoc);
-      currentDoc = null; currentSection = null; currentSubsection = null;
+      currentDoc = null; currentSection = null; currentSubsection = null; lastTag = null;
     } else if (t.startsWith('[TITULO]')) {
-      currentDoc = { titulo: t.replace('[TITULO]','').trim(), sections: [] };
+      const titulo = t.replace('[TITULO]','').trim();
+      if (titulo) currentDoc = { titulo, sections: [] };
       currentSection = null; currentSubsection = null;
     } else if (t.startsWith('[SECCION]') && currentDoc) {
       currentSubsection = null;
-      currentSection = { title: t.replace('[SECCION]','').trim(), items: [] };
-      currentDoc.sections.push(currentSection);
+      const title = t.replace('[SECCION]','').trim();
+      if (title) { currentSection = { title, items: [] }; currentDoc.sections.push(currentSection); }
     } else if (t.startsWith('[SUBSECCION]') && currentSection) {
-      currentSubsection = { title: t.replace('[SUBSECCION]','').trim(), items: [] };
-      currentSection.items.push({ type: 'subsection', data: currentSubsection });
+      const title = t.replace('[SUBSECCION]','').trim();
+      if (title) {
+        currentSubsection = { title, items: [] };
+        currentSection.items.push({ type: 'subsection', data: currentSubsection });
+      }
     } else if (t.startsWith('[CAMPO]')) {
+      const text = t.replace('[CAMPO]','').trim();
       const target = currentSubsection || currentSection;
-      if (target) target.items.push({ type: 'field', text: t.replace('[CAMPO]','').trim() });
+      if (target && text) target.items.push({ type: 'field', text });
+      lastTag = text ? null : 'campo';
     } else if (t.startsWith('[TEXTO]')) {
+      const text = t.replace('[TEXTO]','').trim();
       const target = currentSubsection || currentSection;
-      if (target) target.items.push({ type: 'text', text: t.replace('[TEXTO]','').trim() });
+      if (target && text) target.items.push({ type: 'text', text });
+      lastTag = text ? null : 'texto';
     } else if (t.startsWith('[LISTA]')) {
+      const text = t.replace('[LISTA]','').trim();
       const target = currentSubsection || currentSection;
-      if (target) target.items.push({ type: 'bullet', text: t.replace('[LISTA]','').trim() });
+      if (target && text) target.items.push({ type: 'bullet', text });
+      lastTag = text ? null : 'lista';
+    } else if (lastTag && currentDoc) {
+      // Contenido huérfano — pertenece a la última marca
+      const target = currentSubsection || currentSection;
+      if (target && t && !t.startsWith('[')) {
+        const typeMap = { lista: 'bullet', texto: 'text', campo: 'field' };
+        target.items.push({ type: typeMap[lastTag] || 'text', text: t });
+      }
+      lastTag = null;
     }
-    // Ignorar [PERIODO_X] en el parser — ya están procesadas antes de llegar acá
   }
   if (currentDoc) documents.push(currentDoc);
   return documents;
@@ -792,16 +818,20 @@ function buildHistoryPayload() {
     const text = t.parts[0].text;
     let truncated;
     if (isDocumentText(text)) {
-      // Preservar marca de período + título para que detectActiveFlow funcione
-      const titleMatch  = text.match(/\[TITULO\]\s*(.+)/);
+      // Solo preservar la marca de período para que detectActiveFlow funcione.
+      // NO incluir texto adicional que el modelo pueda imitar.
       const periodoMatch = text.match(/\[PERIODO_(\d)\]/);
-      const titulo  = titleMatch  ? titleMatch[1].trim()            : '';
+      const titleMatch   = text.match(/\[TITULO\]\s*([^\n]+)/);
       const periodo = periodoMatch ? `[PERIODO_${periodoMatch[1]}]` : '';
-      truncated = `${periodo}[TITULO] ${titulo} [documento generado]`;
+      const titulo  = titleMatch   ? titleMatch[1].trim()           : '';
+      // Formato limpio que el modelo reconoce como "ya generado" sin imitarlo
+      truncated = titulo ? `${periodo}[TITULO] ${titulo}` : `${periodo}[documento ya generado]`;
     } else if (t.role === 'user') {
       truncated = text.slice(0, 1200);
     } else {
-      truncated = text.slice(0, 600);
+      // Respuestas del bot: solo las preguntas del wizard, sin documentos
+      const clean = text.replace(/\[TITULO\].*$/s, '').trim();
+      truncated = clean.slice(0, 600);
     }
     return { role: t.role, parts: [{ text: truncated }] };
   });
