@@ -188,6 +188,12 @@
       <div class="status-dot"></div>
       <span id="statusText">En línea</span>
     </div>
+    <button id="newChatBtn" title="Nueva consulta" onclick="resetChat()" style="
+      width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);
+      background:var(--warm-white);cursor:pointer;display:flex;align-items:center;
+      justify-content:center;flex-shrink:0;transition:background 0.15s;
+      font-size:15px;color:var(--brown-light);
+    " aria-label="Nueva consulta">↺</button>
   </header>
 
   <div class="offline-banner" id="offlineBanner" role="alert">
@@ -263,7 +269,7 @@ const MAX_CHARS      = 2000;
 const MAX_RETRY      = 2;
 const RETRY_BASE     = 1200;
 const CLIENT_TIMEOUT = 33000;
-const HISTORY_LIMIT  = 20;
+const HISTORY_LIMIT  = 16;
 
 function isDocumentText(text) {
   return text.includes('[TITULO]') || text.includes('[FIN_DOCUMENTO]') || text.includes('[PERIODO_');
@@ -491,7 +497,7 @@ function parseDocumentContent(raw) {
 
 function makeFilename(raw) {
   const titleMatch = raw.match(/\[TITULO\]\s*(.+)/);
-  const base = titleMatch ? titleMatch[1].trim() : 'bizcochuela';
+  const base = titleMatch ? titleMatch[1].trim() : 'aulaclara';
   return base
     .toLowerCase()
     .replace(/[áä]/g,'a').replace(/[éë]/g,'e').replace(/[íï]/g,'i')
@@ -786,16 +792,15 @@ function buildHistoryPayload() {
     const text = t.parts[0].text;
     let truncated;
     if (isDocumentText(text)) {
-      // Documentos: solo el título para que el modelo sepa qué generó
-      const titleMatch = text.match(/\[TITULO\]\s*(.+)/);
-      truncated = titleMatch
-        ? `[documento generado: ${titleMatch[1].trim()}]`
-        : '[documento/período generado]';
+      // Preservar marca de período + título para que detectActiveFlow funcione
+      const titleMatch  = text.match(/\[TITULO\]\s*(.+)/);
+      const periodoMatch = text.match(/\[PERIODO_(\d)\]/);
+      const titulo  = titleMatch  ? titleMatch[1].trim()            : '';
+      const periodo = periodoMatch ? `[PERIODO_${periodoMatch[1]}]` : '';
+      truncated = `${periodo}[TITULO] ${titulo} [documento generado]`;
     } else if (t.role === 'user') {
-      // Respuestas del docente: completas hasta 1200 chars
       truncated = text.slice(0, 1200);
     } else {
-      // Respuestas del bot (preguntas del wizard): hasta 600 chars
       truncated = text.slice(0, 600);
     }
     return { role: t.role, parts: [{ text: truncated }] };
@@ -837,11 +842,30 @@ async function fetchWithRetry(message, attempt = 0) {
   }
 }
 
+// Mensajes de carga según contexto
+function getLoadingMessage(text) {
+  const t = text.toLowerCase();
+  if (t.includes('plan anual'))    return 'Clara está armando el plan…';
+  if (t.includes('boletín') || t.includes('boletin') || t.includes('informe'))
+    return 'Clara está redactando los informes…';
+  if (t.includes('adaptación') || t.includes('adaptacion'))
+    return 'Clara está preparando la adaptación…';
+  if (t.includes('planificación') || t.includes('planificacion') || t.includes('clase'))
+    return 'Clara está armando la planificación…';
+  return null; // null = typing dots normales
+}
+
 async function sendMessage(text) {
   if (!text.trim() || isLoading) return;
   isLoading = true; sendBtn.disabled = true; setChipsDisabled(true);
   appendMessage(text, 'user');
   showTyping();
+  // Mensaje contextual después de 2.5s si tarda
+  const loadMsg = getLoadingMessage(text);
+  let loadTimer = null;
+  if (loadMsg) {
+    loadTimer = setTimeout(() => showToast(loadMsg, 15000), 2500);
+  }
   const pendingTurn = { role: 'user', parts: [{ text }] };
   try {
     const reply = await fetchWithRetry(text);
@@ -857,9 +881,10 @@ async function sendMessage(text) {
     }
   } catch (err) {
     hideTyping();
-    const msgs = { rate_limit: 'Muchas consultas seguidas. Esperá un minuto 👩‍🏫', offline: 'Sin conexión. Revisá tu red 👩‍🏫' };
-    appendMessage(msgs[err.message] || (err.name==='AbortError' ? 'Tardó demasiado. Intentá de nuevo 👩‍🏫' : err.message.length < 120 ? err.message : 'Problema técnico. Intentá de nuevo 👩‍🏫'), 'bot');
+    const msgs = { rate_limit: 'Muchas consultas seguidas. Esperá un minuto antes de reintentar.', offline: 'Sin conexión a internet. Revisá tu red.' };
+    appendMessage(msgs[err.message] || (err.name==='AbortError' ? 'Tardó demasiado en responder. Intentá de nuevo.' : err.message.length < 120 ? err.message : 'Problema técnico. Intentá de nuevo en un momento.'), 'bot');
   } finally {
+    if (loadTimer) clearTimeout(loadTimer);
     isLoading = false;
     sendBtn.disabled = inputEl.value.trim().length === 0;
     setChipsDisabled(false);
@@ -894,24 +919,66 @@ inputEl.addEventListener('focus', () => {
 
 setStatus(navigator.onLine);
 
+// ── Nueva consulta ──────────────────────────────────────────────
+function resetChat() {
+  if (isLoading) return;
+  history = [];
+  planAnual.reset();
+  // Limpiar mensajes excepto el inicial
+  const rows = messagesEl.querySelectorAll('.msg-row');
+  rows.forEach((row, i) => { if (i > 0) row.remove(); });
+  // Mostrar chips nuevamente
+  if (suggestEl) suggestEl.style.display = 'flex';
+  inputEl.value = ''; autoResize(); updateCharCount();
+  showToast('Nueva consulta iniciada.');
+}
+
 // ── PIN de acceso ───────────────────────────────────────────────
 
-function submitPin() {
+async function submitPin() {
   const pinInput = document.getElementById('pinInput');
   const pinError = document.getElementById('pinError');
-  const pin = pinInput.value.trim().toUpperCase();
+  const pinBtn   = document.getElementById('pinBtn');
+  const pin      = pinInput.value.trim().toUpperCase();
 
   if (!pin || pin.length < 4) {
-    pinError.textContent = 'Ingresá un código válido';
+    pinError.textContent = 'Ingresá un código válido.';
+    pinInput.focus();
     return;
   }
 
-  // Si el Worker tiene MUNICIPIO_PINS configurado, valida server-side
-  // Si no está configurado, cualquier PIN no vacío pasa (modo demo)
-  sessionPin = pin;
-  document.getElementById('pinScreen').style.display = 'none';
-  document.getElementById('mainPage').style.display  = 'flex';
-  inputEl.focus();
+  // Validar contra el Worker antes de mostrar el chat
+  pinBtn.textContent = 'Verificando…';
+  pinBtn.disabled    = true;
+  pinError.textContent = '';
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'ping', history: [], pin }),
+    });
+    if (res.status === 403) {
+      pinError.textContent = 'Código incorrecto. Revisá con tu coordinador.';
+      pinInput.value = '';
+      pinInput.focus();
+      return;
+    }
+    // Cualquier otro status (200, 502, etc.) = PIN válido o Worker sin PIN
+    sessionPin = pin;
+    document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('mainPage').style.display  = 'flex';
+    inputEl.focus();
+  } catch {
+    // Sin conexión — entrar igual, el Worker validará después
+    sessionPin = pin;
+    document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('mainPage').style.display  = 'flex';
+    inputEl.focus();
+  } finally {
+    pinBtn.textContent = 'Ingresar';
+    pinBtn.disabled    = false;
+  }
 }
 
 // Enter en el campo PIN
