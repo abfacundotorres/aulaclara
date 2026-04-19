@@ -182,7 +182,7 @@
     </div>
     <div class="header-text">
       <div class="header-name">Aula Clara</div>
-      <div class="header-sub">Asistente pedagógica · Docentes y directivos · Primaria Córdoba</div>
+      <div class="header-sub">Asistente pedagógica · Docentes · Primaria Córdoba</div>
     </div>
     <div class="status-badge online" id="statusBadge">
       <div class="status-dot"></div>
@@ -219,16 +219,16 @@
       <div class="bubble-wrap">
         <div class="bubble">
           <p>¡Hola! Soy <strong>Clara</strong> 👩‍🏫</p>
-          <p>Docente, pedagoga y tu nueva colega de confianza. Estoy acá para simplificarte la vida — planificaciones, boletines, adaptaciones y lo que necesites. 📚</p>
-          <p>¿Con quién tengo el gusto?</p>
+          <p>Soy docente como vos, con 20 años en primaria. Estoy acá para simplificarte la vida — planificaciones, boletines, adaptaciones y lo que necesites. 📚</p>
+          <p>¿Cómo te llamás y en qué grado trabajás?</p>
         </div>
       </div>
     </div>
 
     <div class="suggestions" id="suggestions">
-      <button class="chip" onclick="sendSuggestion('Soy docente')">Soy docente</button>
-      <button class="chip" onclick="sendSuggestion('Soy directivo')">Soy directivo/a</button>
-      <button class="chip" onclick="sendSuggestion('Soy del equipo de conducción')">Equipo de conducción</button>
+      <button class="chip" onclick="sendSuggestion('Soy docente de primer ciclo')">Primer ciclo</button>
+      <button class="chip" onclick="sendSuggestion('Soy docente de segundo ciclo')">Segundo ciclo</button>
+      <button class="chip" onclick="sendSuggestion('Soy docente especial')">Docente especial</button>
     </div>
 
     <div class="typing-row" id="typingRow">
@@ -257,7 +257,7 @@
       <span class="char-count" id="charCount" aria-live="polite"></span>
     </div>
     <div class="disclaimer">
-      Clara IA puede cometer errores. Verificá la información importante. Uso exclusivo para mayores de 18 años.
+      Clara puede cometer errores. Verificá la información importante antes de usar los documentos.
     </div>
   </div>
 </div>
@@ -459,7 +459,7 @@ function parseDocumentContent(raw) {
   // Ej: "[LISTA]\nContenido" → "[LISTA] Contenido"
   const normalized = raw
     .replace(/\[PERIODO_\d\]\s*/g, '')
-    .replace(/^\s*[-•]\s*/gm, '[LISTA] ');
+    .replace(/^(\s*)[-•]\s+/gm, '$1[LISTA] ');  // Solo líneas que arrancan con bullet
 
   const lines = normalized.split('\n');
   const documents = [];
